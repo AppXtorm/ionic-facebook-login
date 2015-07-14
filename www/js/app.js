@@ -8,7 +8,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'ngOpenFB'])
 
     .run(function($ionicPlatform, ngFB) {
 
-    ngFB.init({ appId: '804333932968844'})
+    ngFB.init({ appId: '804333932968844' })
 
     $ionicPlatform.ready(function() {
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -27,60 +27,42 @@ angular.module('starter', ['ionic', 'starter.controllers', 'ngOpenFB'])
     $stateProvider
 
         .state('app', {
-        url: "/app",
-        abstract: true,
-        templateUrl: "templates/menu.html",
-        controller: 'AppCtrl'
-    })
+            url: "/app",
+            abstract: true,
+            templateUrl: "templates/menu.html",
+            controller: 'AppCtrl'
+        })
 
-        .state('app.search', {
-        url: "/search",
-        views: {
-            'menuContent': {
-                templateUrl: "templates/search.html"
+        .state('app.friends', {
+            url: "/friends",
+            views: {
+                'menuContent': {
+                    templateUrl: "templates/friends.html",
+                    controller: 'AppCtrl'
+                }
             }
-        }
-    })
+        })
 
-        .state('app.browse', {
-        url: "/browse",
-        views: {
-            'menuContent': {
-                templateUrl: "templates/browse.html"
+        .state('app.friend', {
+            url: "/friend/:friendId",
+            views: {
+                'menuContent': {
+                    templateUrl: "templates/friend.html",
+                    controller: 'FriendCtrl'
+                }
             }
-        }
-    })
-    
-        .state('app.sessions', {
-        url: "/sessions",
-        views: {
-            'menuContent': {
-                templateUrl: "templates/sessions.html",
-                controller: 'SessionsCtrl'
-            }
-        }
-    })
+        })
 
-        .state('app.session', {
-        url: "/sessions/:sessionId",
-        views: {
-            'menuContent': {
-                templateUrl: "templates/session.html",
-                controller: 'SessionCtrl'
-            }
-        }
-    })
-    
         .state('app.profile', {
-        url: "/profile",
-        views: {
-            'menuContent': {
-                templateUrl: "templates/profile.html",
-                controller: "ProfileCtrl"
+            url: "/profile",
+            views: {
+                'menuContent': {
+                    templateUrl: "templates/profile.html",
+                    controller: "ProfileCtrl"
+                }
             }
-        }
-    });
-    
+        });
+
     // if none of the above states are matched, use this as the fallback
-    $urlRouterProvider.otherwise('/app/sessions');
+    $urlRouterProvider.otherwise('/app/friends');
 });

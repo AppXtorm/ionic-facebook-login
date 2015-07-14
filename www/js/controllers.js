@@ -1,6 +1,7 @@
+
 angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
-    .controller('AppCtrl', function($scope, $ionicModal, $timeout, $location, ngFB) {
+    .controller('AppCtrl', function($scope, $ionicModal, $timeout, $location, Friends, ngFB) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -41,11 +42,12 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
     };
 
     $scope.fbLogin = function () {
-        ngFB.login({scope: 'email'}).then(
+        ngFB.login({scope: 'email,user_friends'}).then(
             function (response) {
                 if (response.status === 'connected') {                    
                     console.log('Facebook login succeeded', response);                    
-                    window.localStorage.accessToken = response.authResponse.accessToken;                    
+                    window.localStorage.accessToken = response.authResponse.accessToken;     
+                    getFriendsList();
                     $scope.closeLogin();
                 } else {
                     alert('Facebook login failed');
@@ -53,22 +55,31 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
             });
     };
 
+    var getFriendsList = function(){   
+
+        ngFB.api({path: '/me/taggable_friends' })
+            .then(function(result){ $scope.friends = result.data; Friends.set(result.data); },
+                  function(error){ console.log('error', error) });       
+        
+    }
+
     $scope.loggedUser = function(){
         if(window.localStorage.hasOwnProperty("accessToken")){
             $location.path('/app/profile');
         }else{
-            alert('Not signed in!');
             $scope.login();
         }
     }
 })
 
-    .controller('SessionsCtrl', function($scope, Session) {
-    $scope.sessions = Session.query();
+    .controller('FriendsCtrl', function($scope, $stateParams, Friends) {
+    $scope.friends = Friends.get();
+    console.log('FriendsCtrl', $scope.friends)
 })
+    .controller('FriendCtrl', function($scope, $stateParams, Friends) {        
+    var friendId = $stateParams.friendId;    
+    $scope.friend = Friends.get(friendId)[0];
 
-    .controller('SessionCtrl', function($scope, $stateParams, Session) {
-    $scope.session = Session.get({sessionId: $stateParams.sessionId});
 })
     .controller('ProfileCtrl', function ($http, $scope, $location, ngFB) {        
 
@@ -83,7 +94,16 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
                         format: "json" 
                        }
                       })
-                .then(function(result){ $scope.user = result.data }, function(error) { console.log('error'); });
+                .then(
+                function(result)
+                {
+                    console.log(result.data);
+                    $scope.user = result.data; 
+                }, 
+                function(error) 
+                { 
+                    console.log('error'); 
+                });
 
         }else{
             alert('Not signed in!');
@@ -92,9 +112,11 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
     }
 
     $scope.fbLogout = function(){
-                
+
         ngFB.logout();        
-        $location.path('/app/sessions');
+        $location.path('/app');
         localStorage.clear();
     }
 });
+
+

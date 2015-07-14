@@ -1,13 +1,10 @@
-<ion-view view-title="Session">
+<ion-view view-title="{{friend.name}}">
   <ion-content>
     <div class="list card">
-      <div class="item">
-        <h3>{{session.time}}</h3>
-        <h2>{{session.title}}</h2>
-        <p>{{session.speaker}}</p>
-      </div>
-      <div class="item item-body">
-        <p>{{session.description}}</p>
+      <div class="item item-avatar">        
+        <img src="{{friend.picture.data.url}}">
+        <h2>{{friend.name}}</h2>
+        <p> <i class="ion-arrow-up-b balanced"> 0,00 </i>  <i class="ion-arrow-down-b assertive"> 0,00 </i> </p>
       </div>
       <div class="item tabs tabs-secondary tabs-icon-left">
         <a class="tab-item">

@@ -58,7 +58,7 @@ angular.module('ngOpenFB', [])
             );
             return deferred.promise;
         }
-
+    
         function getLoginStatus() {
             var deferred = $q.defer();
             $window.openFB.getLoginStatus(

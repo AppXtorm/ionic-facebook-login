@@ -1,30 +1,53 @@
 angular.module('starter.services', ['ngResource'])
 
-    .factory('Session', function ($resource) {
-    return $resource('http://10.10.15.67:5000/sessions/:sessionId');
-})
-
-    .factory('Friends', function(){ 
-    var friend = [];
+    .factory('Friends', function($q, $timeout){ 
+    var friends = [];
     function set(data) {
-        friend = data;
-        console.log('friends setted');
+        friends = data;
     }
-    function get() {
-        console.log('friends requested');
-        return friend;
+    
+    function getAll() {
+        console.log('getAll');
+        return friends;
     }
-    function get(id){
-        var result = friend.filter(function(f){ return f.id == id });
+    
+    function get(id){       
         
-        console.log(result);
-        
+        var result = friends.filter(function(f){ return f.id == id });        
+        console.log(result);        
         return result
     }
     
+    function add(f){
+        friends.push(f);      
+    }
+    
+    var searchFriends = function(searchFilter) {
+         
+        //console.log('Searching friends for ' + searchFilter);
+
+        var deferred = $q.defer();
+
+	    var matches = friends.filter( function(friend) {
+	    	if(friend.name.toLowerCase().indexOf(searchFilter.toLowerCase()) !== -1 ) return true;
+	    })
+
+        $timeout( function(){
+        
+           deferred.resolve( matches );
+
+        }, 500);
+
+        return deferred.promise;
+
+    };
+    
     return {
         set: set,
-        get: get
+        getAll: getAll,
+        get: get,
+        searchFriends: searchFriends,
+        add: add
     }
 
 }) ;

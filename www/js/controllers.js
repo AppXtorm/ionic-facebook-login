@@ -1,7 +1,8 @@
+/// <reference path="../../typings/angularjs/angular.d.ts"/>
 
 angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
-    .controller('AppCtrl', function($scope, $ionicModal, $timeout, $location, Friends, ngFB) {
+    .controller('AppCtrl', function($http, $scope, $ionicModal, $timeout, $location, $q, $ionicLoading, Friends, ngFB) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -9,6 +10,22 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
     // listen for the $ionicView.enter event:
     //$scope.$on('$ionicView.enter', function(e) {
     //});
+
+    $scope.searchKey = "";
+        
+    $scope.clearSearch = function () {
+        $scope.searchKey = "";
+        
+    }
+    
+     $scope.search = function () {
+         
+         if($scope.searchKey.length > 2)
+            Friends.searchFriends($scope.searchKey)
+                .then(function(fs){ 
+                        $scope.friends = fs 
+                      });
+    }
 
     // Form data for the login modal
     $scope.loginData = {};
@@ -42,9 +59,10 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
     };
 
     $scope.fbLogin = function () {
-        ngFB.login({scope: 'email,user_friends'}).then(
+        ngFB.login({scope: 'email,user_friends,publish_actions'}).then(
             function (response) {
-                if (response.status === 'connected') {                    
+                if (response.status === 'connected') {                
+                    $ionicLoading.show({template: '<p>Adicionando amigos...<p><ion-spinner></ion-spinner>'});
                     console.log('Facebook login succeeded', response);                    
                     window.localStorage.accessToken = response.authResponse.accessToken;     
                     getFriendsList();
@@ -58,9 +76,30 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
     var getFriendsList = function(){   
 
         ngFB.api({path: '/me/taggable_friends' })
-            .then(function(result){ $scope.friends = result.data; Friends.set(result.data); },
-                  function(error){ console.log('error', error) });       
-        
+            .then(function(result){ 
+            //$scope.friends = result.data
+            Friends.set(result.data);            
+            
+            getNextResult(result.paging.next);    
+        }, function(error){ console.log('error', error) });       
+
+    }
+
+    var getNextResult = function(next){ 
+
+        $http.get(next)
+            .then(function(nextResult){
+
+            nextResult.data.data.forEach(function(f){ Friends.add(f); });
+
+            if (nextResult.data.paging.next){
+                getNextResult(nextResult.data.paging.next);
+            }else{                
+               $ionicLoading.hide();                
+            }
+
+        }, function(error) { console.log(error); });
+
     }
 
     $scope.loggedUser = function(){

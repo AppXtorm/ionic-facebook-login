@@ -1,5 +1,3 @@
-/// <reference path="../../typings/angularjs/angular.d.ts"/>
-
 angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
     .controller('AppCtrl', function($http, $scope, $ionicModal, $timeout, $location, $q, $ionicLoading, Friends, ngFB) {
@@ -12,19 +10,18 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
     //});
 
     $scope.searchKey = "";
-        
+
     $scope.clearSearch = function () {
-        $scope.searchKey = "";
-        
+        $scope.searchKey = "";        
     }
-    
-     $scope.search = function () {
-         
-         if($scope.searchKey.length > 2)
+
+    $scope.search = function () {  
+        console.log('searching...')
+        if($scope.searchKey.length > 2)
             Friends.searchFriends($scope.searchKey)
                 .then(function(fs){ 
-                        $scope.friends = fs 
-                      });
+                $scope.friends = fs 
+            });
     }
 
     // Form data for the login modal
@@ -47,18 +44,7 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
         $scope.modal.show();
     };
 
-    // Perform the login action when the user submits the login form
-    $scope.doLogin = function() {
-        console.log('Doing login', $scope.loginData);
-
-        // Simulate a login delay. Remove this and replace with your login
-        // code if using a login system
-        $timeout(function() {
-            $scope.closeLogin();
-        }, 1000);
-    };
-
-    $scope.fbLogin = function () {
+    $scope.fbLogin = function () {        
         ngFB.login({scope: 'email,user_friends,publish_actions'}).then(
             function (response) {
                 if (response.status === 'connected') {                
@@ -77,11 +63,11 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
         ngFB.api({path: '/me/taggable_friends' })
             .then(function(result){ 
-            //$scope.friends = result.data
-            Friends.set(result.data);            
-            
+            result.data.forEach(function(f){ Friends.addFriend(f); });           
             getNextResult(result.paging.next);    
-        }, function(error){ console.log('error', error) });       
+        }, function(error){ 
+            console.log('error', error) 
+        });       
 
     }
 
@@ -90,15 +76,20 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
         $http.get(next)
             .then(function(nextResult){
 
-            nextResult.data.data.forEach(function(f){ Friends.add(f); });
+            nextResult.data.data.forEach(function(f){ Friends.addFriend(f); });
 
             if (nextResult.data.paging.next){
-                getNextResult(nextResult.data.paging.next);
+               // getNextResult(nextResult.data.paging.next);
             }else{                
-               $ionicLoading.hide();                
-            }
+                                      
+            }            
+            
+            Friends.getAllFriends()
+                    .then(function(result){ $ionicLoading.hide(); console.log('all added ' + result.length) }, function(){ console.log('allfriends error')});            
 
-        }, function(error) { console.log(error); });
+        }, function(error) { 
+            console.log(error); 
+        });
 
     }
 
@@ -109,18 +100,17 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
             $scope.login();
         }
     }
+
 })
 
     .controller('FriendsCtrl', function($scope, $stateParams, Friends) {
-    $scope.friends = Friends.get();
-    console.log('FriendsCtrl', $scope.friends)
+    
 })
     .controller('FriendCtrl', function($scope, $stateParams, Friends) {        
     var friendId = $stateParams.friendId;    
-    $scope.friend = Friends.get(friendId)[0];
-
+    Friends.getFriendByID(friendId).then(function(result){ $scope.friend = result; });
 })
-    .controller('ProfileCtrl', function ($http, $scope, $location, ngFB) {        
+    .controller('ProfileCtrl', function ($http, $scope, $location, $cordovaSQLite, ngFB, Friends) {        
 
     $scope.init = function(){
 
@@ -152,9 +142,12 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
     $scope.fbLogout = function(){
 
-        ngFB.logout();        
+        ngFB.logout();                
         $location.path('/app');
+        
         localStorage.clear();
+        console.warn('localStorage clear');
+        Friends.clearDatabase().then(function() { console.warn('BD clear'); });
     }
 });
 

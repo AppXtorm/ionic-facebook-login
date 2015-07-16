@@ -1,53 +1,96 @@
 angular.module('starter.services', ['ngResource'])
 
-    .factory('Friends', function($q, $timeout){ 
-    var friends = [];
-    function set(data) {
-        friends = data;
+    .factory('Friends', function($q, $timeout, $cordovaSQLite, DBA){ 
+    
+    function addFriend(friend){        
+        var parameters = [friend.id, friend.name, friend.picture.data.url];
+        return DBA.query("INSERT INTO friend (id, name, picture) VALUES (?,?,?)", parameters);
     }
     
-    function getAll() {
-        console.log('getAll');
-        return friends;
+    function getFriendByID(id){                     
+        return DBA.query("SELECT * FROM friend WHERE id = (?)", [id])
+                            .then(function(result) {
+                                return DBA.getById(result);
+                            }); 
     }
-    
-    function get(id){       
-        
-        var result = friends.filter(function(f){ return f.id == id });        
-        console.log(result);        
-        return result
+
+    function getAllFriends(){
+        return DBA.query("SELECT * FROM friend")
+                            .then(function(result){
+                                return DBA.getAll(result);
+                            });
     }
-    
-    function add(f){
-        friends.push(f);      
-    }
-    
+
     var searchFriends = function(searchFilter) {
-         
-        //console.log('Searching friends for ' + searchFilter);
 
         var deferred = $q.defer();
 
-	    var matches = friends.filter( function(friend) {
-	    	if(friend.name.toLowerCase().indexOf(searchFilter.toLowerCase()) !== -1 ) return true;
-	    })
+        var param = ['%' + searchFilter + '%'];
 
-        $timeout( function(){
+        var matches = DBA.query("SELECT * FROM friend WHERE name like (?)", param)
+                            .then(function(result) {
+                                return DBA.getAll(result);
+                            });
         
-           deferred.resolve( matches );
-
-        }, 500);
+        $timeout( function(){
+            deferred.resolve( matches );
+        }, 500);        
 
         return deferred.promise;
 
     };
     
-    return {
-        set: set,
-        getAll: getAll,
-        get: get,
-        searchFriends: searchFriends,
-        add: add
+    var clearDatabase = function(){
+        return DBA.query("DELETE FROM friend");
     }
 
+    return {
+        getAllFriends: getAllFriends,
+        searchFriends: searchFriends,
+        getFriendByID: getFriendByID,
+        clearDatabase: clearDatabase,
+        addFriend: addFriend
+    }
+
+})
+
+    .factory('DBA', function($cordovaSQLite, $q, $ionicPlatform) {
+    var self = this;
+
+    // Handle query's and potential errors
+    self.query = function (query, parameters) {
+        parameters = parameters || [];
+        var q = $q.defer();
+
+        $ionicPlatform.ready(function () {
+            $cordovaSQLite.execute(db, query, parameters)
+                .then(function (result) {
+                q.resolve(result);
+            }, function (error) {
+                console.warn('I found an error');
+                console.warn(error);
+                q.reject(error);
+            });
+        });
+        return q.promise;
+    }
+
+    // Proces a result set
+    self.getAll = function(result) {
+        var output = [];
+
+        for (var i = 0; i < result.rows.length; i++) {
+            output.push(result.rows.item(i));
+        }
+        return output;
+    }
+
+    // Proces a single result
+    self.getById = function(result) {
+        var output = null;
+        output = angular.copy(result.rows.item(0));
+        return output;
+    }
+
+    return self;
 }) ;

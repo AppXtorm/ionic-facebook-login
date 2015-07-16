@@ -19,18 +19,20 @@ angular.module('starter', ['ionic', 'starter.controllers', 'ngOpenFB', 'ngCordov
         if (window.StatusBar) {
             // org.apache.cordova.statusbar required
             StatusBar.styleDefault();
+        }        
+
+        if(window.cordova){
+            // App syntax        
+            db = $cordovaSQLite.openDB("mepague.db");
+        }else{
+            // Ionic serve syntax
+            db = window.openDatabase('mepague.db', '1.0', "Me Pague", -1);
         }
+        //$cordovaSQLite.execute(db, "DROP TABLE IF EXISTS friend" );
+        $cordovaSQLite.execute(db, "CREATE TABLE IF NOT EXISTS friend (id text primary key, name text, picture text)");
+
     });
 
-    if(window.cordova){
-        // App syntax
-        db = $cordovaSQLite.openDB('mepague.db');
-    }else{
-        // Ionic serve syntax
-        db = window.openDatabase('mepague.db', '1.0', "Me Pague", -1);
-    }
-    //$cordovaSQLite.execute(db, "DROP TABLE IF EXISTS friend" );
-    $cordovaSQLite.execute(db, "CREATE TABLE IF NOT EXISTS friend (id text primary key, name text, picture text)");
 })
 
     .config(function($stateProvider, $urlRouterProvider) {

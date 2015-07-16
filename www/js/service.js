@@ -27,10 +27,10 @@ angular.module('starter.services', ['ngResource'])
 
         var param = ['%' + searchFilter + '%'];
 
-        var matches = DBA.query("SELECT * FROM friend WHERE name like (?)", param)
+        var matches = DBA.query("SELECT * FROM friend WHERE name like (?) LIMIT 20", param)
                             .then(function(result) {
                                 return DBA.getAll(result);
-                            });
+                            }, function(error){ alert(error) });
         
         $timeout( function(){
             deferred.resolve( matches );

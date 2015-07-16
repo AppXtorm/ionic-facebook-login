@@ -48,7 +48,7 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
         ngFB.login({scope: 'email,user_friends,publish_actions'}).then(
             function (response) {
                 if (response.status === 'connected') {                
-                    $ionicLoading.show({template: '<p>Adicionando amigos...<p><ion-spinner></ion-spinner>'});
+                    $ionicLoading.show({template: '<p>Adicionando amigos<p><ion-spinner></ion-spinner>'});
                     console.log('Facebook login succeeded', response);                    
                     window.localStorage.accessToken = response.authResponse.accessToken;     
                     getFriendsList();
@@ -63,8 +63,8 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
         ngFB.api({path: '/me/taggable_friends' })
             .then(function(result){ 
-            result.data.forEach(function(f){ Friends.addFriend(f); });           
-            getNextResult(result.paging.next);    
+            result.data.forEach(function(f){ Friends.addFriend(f)});           
+            getNextResult(result.paging.next);                    
         }, function(error){ 
             console.log('error', error) 
         });       
@@ -79,13 +79,10 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
             nextResult.data.data.forEach(function(f){ Friends.addFriend(f); });
 
             if (nextResult.data.paging.next){
-               // getNextResult(nextResult.data.paging.next);
+               getNextResult(nextResult.data.paging.next);
             }else{                
-                                      
+               $ionicLoading.hide();            
             }            
-            
-            Friends.getAllFriends()
-                    .then(function(result){ $ionicLoading.hide(); console.log('all added ' + result.length) }, function(){ console.log('allfriends error')});            
 
         }, function(error) { 
             console.log(error); 

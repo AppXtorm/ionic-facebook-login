@@ -1,24 +1,37 @@
 angular.module('starter.services', ['ngResource'])
 
     .factory('Friends', function($q, $timeout, $cordovaSQLite, DBA){ 
-    
+
     function addFriend(friend){        
         var parameters = [friend.id, friend.name, friend.picture.data.url];
-        return DBA.query("INSERT INTO friend (id, name, picture) VALUES (?,?,?)", parameters);
+        return DBA.query("INSERT INTO friend (id, name, picture, debt, credit) VALUES (?,?,?, 0, 0)", parameters);
     }
-    
+
     function getFriendByID(id){                     
         return DBA.query("SELECT * FROM friend WHERE id = (?)", [id])
-                            .then(function(result) {
-                                return DBA.getById(result);
-                            }); 
+            .then(function(result) {
+            return DBA.getById(result);
+        }); 
     }
 
     function getAllFriends(){
         return DBA.query("SELECT * FROM friend")
-                            .then(function(result){
-                                return DBA.getAll(result);
-                            });
+            .then(function(result){
+            return DBA.getAll(result);
+        });
+    }
+
+    // change for most debts    
+    function getTop10(){
+        return DBA.query("SELECT * FROM friend LIMIT 10")
+            .then(function(result){
+            return DBA.getAll(result);
+        });
+    }
+
+    function updateFriend(origFriend, destFriend) {
+        var parameters = [destFriend.id, destFriend.name, origFriend.id];
+        return DBA.query("UPDATE friend SET id = (?), name = (?) WHERE id = (?)", parameters);
     }
 
     var searchFriends = function(searchFilter) {
@@ -28,10 +41,10 @@ angular.module('starter.services', ['ngResource'])
         var param = ['%' + searchFilter + '%'];
 
         var matches = DBA.query("SELECT * FROM friend WHERE name like (?) LIMIT 20", param)
-                            .then(function(result) {
-                                return DBA.getAll(result);
-                            }, function(error){ alert(error) });
-        
+        .then(function(result) {
+            return DBA.getAll(result);
+        }, function(error){ alert(error) });
+
         $timeout( function(){
             deferred.resolve( matches );
         }, 500);        
@@ -39,17 +52,19 @@ angular.module('starter.services', ['ngResource'])
         return deferred.promise;
 
     };
-    
+
     var clearDatabase = function(){
         return DBA.query("DELETE FROM friend");
     }
 
     return {
-        getAllFriends: getAllFriends,
-        searchFriends: searchFriends,
-        getFriendByID: getFriendByID,
-        clearDatabase: clearDatabase,
-        addFriend: addFriend
+        getAllFriends : getAllFriends,
+        searchFriends : searchFriends,
+        updateFriend  : updateFriend,
+        getFriendByID : getFriendByID,
+        clearDatabase : clearDatabase,
+        getTop10      : getTop10,
+        addFriend     : addFriend
     }
 
 })
@@ -93,4 +108,21 @@ angular.module('starter.services', ['ngResource'])
     }
 
     return self;
-}) ;
+}) 
+
+    .factory('sharedService', function($rootScope) {
+        var sharedService = {};
+
+        sharedService.message = '';
+
+        sharedService.prepForBroadcast = function(msg) {
+            this.message = msg;
+            this.broadcastItem();
+        };
+
+        sharedService.broadcastItem = function() {
+            $rootScope.$broadcast('handleBroadcast');
+        };
+
+        return sharedService;
+});

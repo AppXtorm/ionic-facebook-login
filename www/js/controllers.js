@@ -1,6 +1,6 @@
 angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
-    .controller('AppCtrl', function($http, $scope, $ionicModal, $timeout, $location, $q, $ionicLoading, Friends, ngFB) {
+    .controller('AppCtrl', function($http, $scope, $ionicModal, $timeout, $location, $q, $ionicLoading, Friends, ngFB, $rootScope) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -8,21 +8,6 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
     // listen for the $ionicView.enter event:
     //$scope.$on('$ionicView.enter', function(e) {
     //});
-
-    $scope.searchKey = "";
-
-    $scope.clearSearch = function () {
-        $scope.searchKey = "";        
-    }
-
-    $scope.search = function () {  
-        console.log('searching...')
-        if($scope.searchKey.length > 2)
-            Friends.searchFriends($scope.searchKey)
-                .then(function(fs){ 
-                $scope.friends = fs 
-            });
-    }
 
     // Form data for the login modal
     $scope.loginData = {};
@@ -79,10 +64,14 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
             nextResult.data.data.forEach(function(f){ Friends.addFriend(f); });
 
             if (nextResult.data.paging.next){
-               getNextResult(nextResult.data.paging.next);
+                //getNextResult(nextResult.data.paging.next);
             }else{                
-               $ionicLoading.hide();            
-            }            
+                $ionicLoading.hide();            
+            }
+            
+            $ionicLoading.hide();   
+            
+            $rootScope.$broadcast('bdPopulated');
 
         }, function(error) { 
             console.log(error); 
@@ -100,12 +89,58 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 })
 
-    .controller('FriendsCtrl', function($scope, $stateParams, Friends) {
+    .controller('FriendsCtrl', function($scope, $stateParams, Friends, sharedService) {
+        
+    console.log('FriendsCtrl');
     
+    $scope.$on('bdPopulated', function() {
+        Friends.getTop10().then(function(fs){ $scope.friends = fs });
+    });
+    
+    $scope.searchKey = "";
+    
+    $scope.clearSearch = function () {
+        $scope.searchKey = "";        
+    }
+    
+    $scope.friendsBkp;
+    
+    $scope.search = function () {  
+        console.log('searching...')
+        if($scope.searchKey.length > 2){
+            Friends.searchFriends($scope.searchKey)
+                .then(function(fs){ 
+                
+                $scope.friendsBkp = $scope.friends;
+                
+                $scope.friends = fs 
+            });            
+        } 
+       
+        else{
+            $scope.friends = $scope.friendsBkp;
+        }
+    };
+    
+    $scope.$on('$ionicView.enter', function(e) {
+        
+        if($scope.searchKey.length == 0)
+            Friends.getTop10().then(function(fs){ console.log(fs); $scope.friends = fs }); 
+        
+    });
 })
+
     .controller('FriendCtrl', function($scope, $stateParams, Friends) {        
     var friendId = $stateParams.friendId;    
+    
+    console.log('FriendCtrl');
+    
     Friends.getFriendByID(friendId).then(function(result){ $scope.friend = result; });
+
+    $scope.editMember = function(origMember, editMember) {
+        Team.update(origMember, editMember);
+        $scope.updateTeam();
+    };
 })
     .controller('ProfileCtrl', function ($http, $scope, $location, $cordovaSQLite, ngFB, Friends) {        
 
@@ -124,7 +159,7 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
                 function(result)
                 {
                     console.log(result.data);
-                    $scope.user = result.data; 
+                    $scope.user = result.data;                     
                 }, 
                 function(error) 
                 { 
@@ -141,7 +176,7 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
         ngFB.logout();                
         $location.path('/app');
-        
+
         localStorage.clear();
         console.warn('localStorage clear');
         Friends.clearDatabase().then(function() { console.warn('BD clear'); });

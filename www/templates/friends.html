@@ -9,10 +9,10 @@
     <ion-content class="has-header has-subheader">       
        
         <ion-list>
-            <ion-item ng-repeat="friend in friends track by $index" type="item-text-wrap" class="item-avatar" href="#/app/friend/{{friend.id}}">
+            <ion-item ng-repeat="friend in friends track by $index" type="item-text-wrap" class="item-avatar" href="#/app/friend/{{friend.id}}" ng-click="clearSearch()">
                 <img src="{{friend.picture}}" />
                 <h2>{{friend.name}}</h2>
-                <p> <i class="ion-arrow-up-b balanced"> {{ friend.credit | number:2 }} </i>  <i class="ion-arrow-down-b assertive"> {{friend.debt | number:2 }} </i> </p>
+                <p> <i class="ion-arrow-up-b balanced"> {{ friend.debt | number:2 }} </i>  <i class="ion-arrow-down-b assertive"> {{friend.credit | number:2 }} </i> </p>
             </ion-item>
         </ion-list>
     </ion-content>

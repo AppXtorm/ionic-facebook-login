@@ -5,20 +5,16 @@
       <div class="item item-avatar">        
         <img src="{{friend.picture}}">
         <h2>{{friend.name}}</h2>
-        <p> <i class="ion-arrow-up-b balanced"> 0,00 </i>  <i class="ion-arrow-down-b assertive"> 0,00 </i> </p>
+        <p> <i class="ion-arrow-up-b balanced"> {{friend.debt | number:2 }} </i>  <i class="ion-arrow-down-b assertive"> {{friend.credit | number:2 }} </i> </p>
       </div>
       <div class="item tabs tabs-secondary tabs-icon-left">
-        <a class="tab-item">
-          <i class="icon ion-thumbsup"></i>
-          Like
+        <a class="tab-item" ng-click="showDebtPopup()">
+          <i class="icon ion-arrow-up-b"></i>
+            Deve  
         </a>
-        <a class="tab-item">
-          <i class="icon ion-chatbox"></i>
-          Comment
-        </a>
-        <a class="tab-item">
-          <i class="icon ion-share"></i>
-          Share
+        <a class="tab-item" ng-click="showCreditPopup()">
+          <i class="icon ion-arrow-down-b"></i>
+            Pagou
         </a>
       </div>
     </div>

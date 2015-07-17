@@ -34,7 +34,6 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
             function (response) {
                 if (response.status === 'connected') {                
                     $ionicLoading.show({template: '<p>Adicionando amigos<p><ion-spinner></ion-spinner>'});
-                    console.log('Facebook login succeeded', response);                    
                     window.localStorage.accessToken = response.authResponse.accessToken;     
                     getFriendsList();
                     $scope.closeLogin();
@@ -60,21 +59,21 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
         $http.get(next)
             .then(function(nextResult){
-
+            
             nextResult.data.data.forEach(function(f){ Friends.addFriend(f); });
 
             if (nextResult.data.paging.next){
                 //getNextResult(nextResult.data.paging.next);
             }else{                
-                $ionicLoading.hide();            
+                //$ionicLoading.hide();                            
+                //$rootScope.$broadcast('bdPopulated');
             }
             
-            $ionicLoading.hide();   
-            
+            $ionicLoading.hide();                            
             $rootScope.$broadcast('bdPopulated');
 
         }, function(error) { 
-            console.log(error); 
+            alert(error); 
         });
 
     }
@@ -90,58 +89,142 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 })
 
     .controller('FriendsCtrl', function($scope, $stateParams, Friends, sharedService) {
-        
+
     console.log('FriendsCtrl');
-    
-    $scope.$on('bdPopulated', function() {
-        Friends.getTop10().then(function(fs){ $scope.friends = fs });
+
+    $scope.$on('bdPopulated', function() {        
+        console.log('bdPopulated');
+        Friends.getTop10().then(function(fs){ $scope.friends = fs; console.log(  $scope.friends.length)}, function(error){ console.warn(error) });
     });
-    
+
     $scope.searchKey = "";
-    
+
     $scope.clearSearch = function () {
         $scope.searchKey = "";        
     }
-    
+
     $scope.friendsBkp;
-    
+
     $scope.search = function () {  
         console.log('searching...')
         if($scope.searchKey.length > 2){
             Friends.searchFriends($scope.searchKey)
                 .then(function(fs){ 
-                
                 $scope.friendsBkp = $scope.friends;
-                
                 $scope.friends = fs 
             });            
         } 
-       
+
         else{
             $scope.friends = $scope.friendsBkp;
         }
     };
-    
+
     $scope.$on('$ionicView.enter', function(e) {
-        
         if($scope.searchKey.length == 0)
             Friends.getTop10().then(function(fs){ console.log(fs); $scope.friends = fs }); 
-        
     });
 })
 
-    .controller('FriendCtrl', function($scope, $stateParams, Friends) {        
+    .controller('FriendCtrl', function($scope, $stateParams, $rootScope, $ionicPopup, Friends) {        
     var friendId = $stateParams.friendId;    
-    
-    console.log('FriendCtrl');
-    
-    Friends.getFriendByID(friendId).then(function(result){ $scope.friend = result; });
 
-    $scope.editMember = function(origMember, editMember) {
-        Team.update(origMember, editMember);
-        $scope.updateTeam();
+    Friends.getFriendByID(friendId).then(function(result){ $scope.friend = result; });
+    
+    $scope.data = {};
+    
+    $scope.showDebtPopup = function() {        
+
+        // An elaborate, custom popup
+        var myPopup = $ionicPopup.show({
+            template: '<input type="number" step="0.01" min="0" ng-model="data.debt">',
+            title: 'Quanto te deve?',
+            scope: $scope,
+            buttons: [
+                { text: 'Cancel', 
+                  onTap: function(){ myPopup.close(); }
+                },
+                {
+                    text: '<b>Salvar</b>',
+                    type: 'button-positive',
+                    onTap: function(e) {
+                        if (!$scope.data.debt) {
+                            //don't allow the user to close unless he enters wifi password
+                            e.preventDefault();                            
+                            myPopup.close();
+                        } else {                                                   
+                            return $scope.data.debt;
+                        }                        
+                    }
+                },
+            ]
+        });
+        myPopup.then(function(res) {
+            var newFriend = angular.copy($scope.friend);
+            newFriend.debt = res;
+            
+            console.log('old', $scope.friend, 'new',newFriend);
+            
+            Friends.updateFriend($scope.friend, newFriend)
+                .then(function(){
+                    Friends.getFriendByID(friendId)
+                        .then(function(result){ 
+                            $scope.friend = result; 
+                        })
+                });
+        });
+    };
+    
+    $scope.showCreditPopup = function() {
+        
+        $scope.data = {};
+
+        // An elaborate, custom popup
+        var myPopup = $ionicPopup.show({
+            template: '<input type="number" step="0.01" min="0" ng-model="data.credit">',
+            title: 'Quanto vc deve?',
+            scope: $scope,
+            buttons: [
+                { text: 'Cancel', 
+                  onTap: function(){ myPopup.close(); }
+                },
+                {
+                    text: '<b>Salvar</b>',
+                    type: 'button-positive',
+                    onTap: function(e) {
+                        if (!$scope.data.credit) {
+                            //don't allow the user to close unless he enters wifi password
+                            e.preventDefault();                            
+                            myPopup.close();
+                        } else {                                                   
+                            return $scope.data.credit;
+                        }                        
+                    }
+                },
+            ]
+        });
+        myPopup.then(function(res) {
+            var newFriend = angular.copy($scope.friend);
+            newFriend.credit = res;
+            
+            console.log('old', $scope.friend, 'new',newFriend);
+            
+            Friends.updateFriend($scope.friend, newFriend)
+                .then(function(){
+                    Friends.getFriendByID(friendId)
+                        .then(function(result){ 
+                            $scope.friend = result; 
+                        })
+                });
+        });
+    };
+
+    $scope.editMember = function(origFriend, editFriend) {            
+        Friends.update(origFriend, editFriend);
+        $rootScope.$broadcast('bdPopulated');
     };
 })
+
     .controller('ProfileCtrl', function ($http, $scope, $location, $cordovaSQLite, ngFB, Friends) {        
 
     $scope.init = function(){

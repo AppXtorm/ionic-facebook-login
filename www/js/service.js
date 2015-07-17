@@ -23,15 +23,15 @@ angular.module('starter.services', ['ngResource'])
 
     // change for most debts    
     function getTop10(){
-        return DBA.query("SELECT * FROM friend LIMIT 10")
+        return DBA.query("SELECT * FROM friend order by debt desc LIMIT 10")
             .then(function(result){
             return DBA.getAll(result);
         });
     }
 
-    function updateFriend(origFriend, destFriend) {
-        var parameters = [destFriend.id, destFriend.name, origFriend.id];
-        return DBA.query("UPDATE friend SET id = (?), name = (?) WHERE id = (?)", parameters);
+    function updateFriend(oldFriend, newFriend) {
+        var parameters = [ newFriend.debt, newFriend.credit, oldFriend.id];
+        return DBA.query("UPDATE friend SET debt = (?), credit = (?) WHERE id = (?)", parameters);
     }
 
     var searchFriends = function(searchFilter) {

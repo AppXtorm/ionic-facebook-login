@@ -29,7 +29,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'ngOpenFB', 'ngCordov
             db = window.openDatabase('mepague.db', '1.0', "Me Pague", -1);
         }
         //$cordovaSQLite.execute(db, "DROP TABLE IF EXISTS friend" );
-        $cordovaSQLite.execute(db, "CREATE TABLE IF NOT EXISTS friend (id text primary key, name text, picture text, debt long, credit long )");
+        $cordovaSQLite.execute(db, "CREATE TABLE IF NOT EXISTS friend (id text primary key, name text, picture text, debt long default 0, credit long default 0)");
 
     });
 

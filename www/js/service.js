@@ -2,9 +2,27 @@ angular.module('starter.services', ['ngResource'])
 
     .factory('Friends', function($q, $timeout, $cordovaSQLite, DBA){ 
 
-    function addFriend(friend){        
+    function addFriend(friend){               
         var parameters = [friend.id, friend.name, friend.picture.data.url];
         return DBA.query("INSERT INTO friend (id, name, picture, debt, credit) VALUES (?,?,?, 0, 0)", parameters);
+    }
+    
+    function addAllFriends(friends){     
+        
+        var defer = $q.defer();
+        var promises = [];
+        
+        function f(friend){
+            addFriend(friend);
+        }
+        
+        friends.forEach(function(friend){            
+            promises.push(f(friend));
+        });
+        
+        $q.all(promises).then(function(){ defer.resolve(); });
+        
+        return defer.promise;
     }
 
     function getFriendByID(id){                     
@@ -20,7 +38,7 @@ angular.module('starter.services', ['ngResource'])
             return DBA.getAll(result);
         });
     }
-
+    
     // change for most debts    
     function getTop10(){
         return DBA.query("SELECT * FROM friend order by debt desc LIMIT 10")
@@ -64,7 +82,8 @@ angular.module('starter.services', ['ngResource'])
         getFriendByID : getFriendByID,
         clearDatabase : clearDatabase,
         getTop10      : getTop10,
-        addFriend     : addFriend
+        addFriend     : addFriend,
+        addAllFriends : addAllFriends
     }
 
 })

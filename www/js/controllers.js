@@ -37,6 +37,8 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
                     window.localStorage.accessToken = response.authResponse.accessToken;     
                     getFriendsList();
                     $scope.closeLogin();
+                    
+                    //console.log(response)
                 } else {
                     alert('Facebook login failed');
                 }
@@ -45,36 +47,36 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
     var getFriendsList = function(){   
 
+        var array = [];
+        
+        var f = function (next)
+        { 
+            $http.get(next).then(function(nextResult){
+
+                array = array.concat(nextResult.data.data);
+                
+                if(nextResult.data.paging.next != null ){
+                    f(nextResult.data.paging.next);
+                }else{
+                
+                    Friends.addAllFriends(array)
+                        .then(function(){
+                            console.log('finished');
+                            $ionicLoading.hide();                            
+                            $rootScope.$broadcast('bdPopulated');
+                        });
+                    
+                }
+            });
+        }
+        
         ngFB.api({path: '/me/taggable_friends' })
-            .then(function(result){ 
-            result.data.forEach(function(f){ Friends.addFriend(f)});           
-            getNextResult(result.paging.next);                    
+            .then(function(result){                  
+            array = result.data;                    
+            f(result.paging.next);                   
         }, function(error){ 
             console.log('error', error) 
         });       
-
-    }
-
-    var getNextResult = function(next){ 
-
-        $http.get(next)
-            .then(function(nextResult){
-            
-            nextResult.data.data.forEach(function(f){ Friends.addFriend(f); });
-
-            if (nextResult.data.paging.next){
-                //getNextResult(nextResult.data.paging.next);
-            }else{                
-                //$ionicLoading.hide();                            
-                //$rootScope.$broadcast('bdPopulated');
-            }
-            
-            $ionicLoading.hide();                            
-            $rootScope.$broadcast('bdPopulated');
-
-        }, function(error) { 
-            alert(error); 
-        });
 
     }
 
@@ -92,9 +94,9 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
     console.log('FriendsCtrl');
 
-    $scope.$on('bdPopulated', function() {        
+    $scope.$on('bdPopulated', function() {  
         console.log('bdPopulated');
-        Friends.getTop10().then(function(fs){ $scope.friends = fs; console.log(  $scope.friends.length)}, function(error){ console.warn(error) });
+        Friends.getTop10().then(function(fs){ $scope.friends = fs; }, function(error){ console.warn(error) });
     });
 
     $scope.searchKey = "";

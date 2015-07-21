@@ -26,7 +26,8 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
     // Open the login modal
     $scope.login = function() {
-        $scope.modal.show();
+        $scope.fbLogin();
+        //// $scope.modal.show(); # not anymore
     };
 
     $scope.fbLogin = function () {        
@@ -38,7 +39,9 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
                     getFriendsList();
                     $scope.closeLogin();
                     
-                    //console.log(response)
+                    $scope.userLogged = true;
+                    
+                    console.log(response)
                 } else {
                     alert('Facebook login failed');
                 }
@@ -56,13 +59,18 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
                 array = array.concat(nextResult.data.data);
                 
                 if(nextResult.data.paging.next != null ){
-                    f(nextResult.data.paging.next);
+                   //// f(nextResult.data.paging.next); # we don't need all friends yet..
+                    
+                    Friends.addAllFriends(array)
+                        .then(function(){
+                            console.log('finished', new Date());                                                  
+                            $rootScope.$broadcast('bdPopulated');
+                        });
                 }else{
                 
                     Friends.addAllFriends(array)
                         .then(function(){
-                            console.log('finished');
-                            $ionicLoading.hide();                            
+                            console.log('finished', new Date());                                                  
                             $rootScope.$broadcast('bdPopulated');
                         });
                     
@@ -78,25 +86,41 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
             console.log('error', error) 
         });       
 
-    }
+    }    
 
     $scope.loggedUser = function(){
-        if(window.localStorage.hasOwnProperty("accessToken")){
-            $location.path('/app/profile');
-        }else{
+        console.log(window.localStorage.hasOwnProperty("accessToken"))
+        if(!window.localStorage.hasOwnProperty("accessToken")){
             $scope.login();
         }
+    }
+    
+     $scope.logout = function(){
+
+        console.log('logout');
+        ngFB.logout();                
+        $location.path('/app');
+
+        localStorage.clear();
+        console.warn('localStorage clear');
+        Friends.clearDatabase().then(function() { console.warn('BD clear'); });
+        $scope.userLogged = false;
     }
 
 })
 
-    .controller('FriendsCtrl', function($scope, $stateParams, Friends, sharedService) {
+    .controller('FriendsCtrl', function($scope, $stateParams, $ionicLoading, Friends, sharedService) {
 
     console.log('FriendsCtrl');
 
     $scope.$on('bdPopulated', function() {  
         console.log('bdPopulated');
-        Friends.getTop10().then(function(fs){ $scope.friends = fs; }, function(error){ console.warn(error) });
+        Friends.getTop10()
+            .then(function(fs){  
+                        $scope.friends = fs; 
+                        console.log('Qtd ' + $scope.friends.length, new Date()); 
+                        $ionicLoading.hide();      
+                    });
     });
 
     $scope.searchKey = "";

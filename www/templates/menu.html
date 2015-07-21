@@ -14,15 +14,29 @@
 
     <ion-side-menu side="left">
         <ion-header-bar class="bar-stable">
-            <h1 class="title">Menu</h1>
+            <h1 class="title">Login {{userLogged}}</h1>
         </ion-header-bar>
         <ion-content>
-            <ion-list>
+          
+            <div class="login-button" ng-click="loggedUser()" ng-show="!userLogged" >
+                <i class="icon ion-social-facebook"></i>
+            </div>
+           
+            <ion-list ng-show="userLogged">
+               <div class="list card">
+                    <div class="item">
+                        <h2>{{user.name}}</h2>
+                        <p>{{user.city}}</p>
+                    </div>
+                    <div class="item item-body">
+                        <img src="http://graph.facebook.com/{{user.id}}/picture?width=270&height=270"/>
+                    </div>
+              </div>
                 <ion-item menu-close href="#/app/friends">
                     Friends
                 </ion-item>
-                <ion-item menu-close ng-click="loggedUser()" >
-                    Profile
+                <ion-item ng-click="logout()">
+                    Logout
                 </ion-item>
             </ion-list>
         </ion-content>
